@@ -71,7 +71,14 @@ def logistic_regression_training(X_train, y_train, alpha=0.01, max_iters=5000, r
     return weights
 
 def logistic_regression_prediction(X, weights, threshold=0.5):
-    return None
+    X_ones = np.hstack((np.ones((len(X), 1)), X))
+    y_preds = np.zeros(shape=(len(X), 1))
+    
+    for i in range(len(y_preds)):
+        if sigmoid(X_ones @ weights)[i] >= threshold:
+            y_preds[i][0] = 1
+
+    return y_preds
 
 def model_selection_and_evaluation(alpha=0.01, max_iters=5000, random_seed=1, threshold=0.5):
     return None
