@@ -56,8 +56,19 @@ def knn_classification(X_train, y_train, x_new, k=5):
         return values[1]
     return values[0]
 
+def sigmoid(z):
+    return 1 / (1 + (np.e ** (-z)))
+
 def logistic_regression_training(X_train, y_train, alpha=0.01, max_iters=5000, random_seed=1):
-    return None
+    X_train_ones = np.hstack((np.ones((len(X_train), 1)), X_train))
+
+    np.random.seed(random_seed)
+    weights = np.random.normal(loc=0.0, scale=1.0, size=(len(X_train_ones[0]), 1))
+    
+    for i in range(max_iters):
+        weights = weights - ((alpha * X_train_ones.T).dot(sigmoid(X_train_ones @ weights) - y_train))
+    
+    return weights
 
 def logistic_regression_prediction(X, weights, threshold=0.5):
     return None
