@@ -80,6 +80,48 @@ def logistic_regression_prediction(X, weights, threshold=0.5):
 
     return y_preds
 
-def model_selection_and_evaluation(alpha=0.01, max_iters=5000, random_seed=1, threshold=0.5):
-    return None
+def knn_predictions(X_train, y_train, X_val, n):
+    y_pred = np.zeros(shape=(len(X_val), 1))
+    for i in range(len(X_val)):
+        y_pred[i][0] = knn_classification(X_train, y_train, X_val[i], n)
+    
+    return y_pred
 
+def model_selection_and_evaluation(alpha=0.01, max_iters=5000, random_seed=1, threshold=0.5):
+    X_train, y_train, X_val, y_val, X_test, y_test = preprocess_classification_dataset()
+    
+    predictions_1nn = knn_predictions(X_train, y_train, X_val, 1)
+    predictions_3nn = knn_predictions(X_train, y_train, X_val, 3)
+    predictions_5nn = knn_predictions(X_train, y_train, X_val, 5)
+
+    weights = logistic_regression_training(X_train, y_train, alpha, max_iters, random_seed)
+    prediction_logistic_regression = logistic_regression_prediction(X_val, weights, threshold)
+
+    val_accuracy_list = []
+    val_accuracy_list.append((y_val.flatten() == predictions_1nn.flatten()).sum() / y_val.shape[0])
+    val_accuracy_list.append((y_val.flatten() == predictions_3nn.flatten()).sum() / y_val.shape[0])
+    val_accuracy_list.append((y_val.flatten() == predictions_5nn.flatten()).sum() / y_val.shape[0])
+    val_accuracy_list.append((y_val.flatten() == prediction_logistic_regression.flatten()).sum() / y_val.shape[0])
+    
+    methods = ['1nn', '3nn', '5nn', 'logistic regression']
+    best_method = methods[val_accuracy_list.index(max(val_accuracy_list))]
+    
+    X_train_val_merge = np.vstack([X_train, X_val])
+    y_train_val_merge = np.vstack([y_train, y_val])
+
+    if best_method == methods[0]:
+        predictions = knn_predictions(X_train_val_merge, y_train_val_merge, X_test, 1)
+
+    elif best_method == methods[1]:
+        predictions = knn_predictions(X_train_val_merge, y_train_val_merge, X_test, 3)
+
+    elif best_method == methods[2]:
+        predictions = knn_predictions(X_train_val_merge, y_train_val_merge, X_test, 5)
+
+    else:
+        weights = logistic_regression_training(X_train_val_merge, y_train_val_merge, alpha, max_iters, random_seed)
+        predictions = logistic_regression_prediction(X_test, weights, threshold)
+
+    test_accuracy = (y_test.flatten() == predictions.flatten()).sum() / y_test.shape[0]
+    
+    return best_method, val_accuracy_list, test_accuracy
